@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 First level cache with 1000 entries has been created
+=======
+First level cache with 1000 entries has been created
+>>>>>>> 4b3ef92 (added project files)
 Second level cache with 2000 entries has been created
 ................................
 Total number of references:        1347451   
