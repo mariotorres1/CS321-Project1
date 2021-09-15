@@ -1,84 +1,277 @@
-import java.util.*;
-import java.io.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.Scanner;
+import java.util.StringTokenizer;
+
+/**
+ * Test class reads a file and test one-level or two-level Cache implementation
+ * and prints the references, hits and Cache ratio.
+ *
+ * @author Mario Torres
+ *
+ */
 public class Test {
-    public static void main(String args[]) throws FileNotFoundException {
-        int cacheLevels = 0;
-        double HR = 0, HR1 = 0, HR2 = 0.00;
-        int NH = 0, NH1 = 0, NH2 = 0, NR = 0, NR1 = 0, NR2 = 0;
-        Cache cache1 = new Cache(1);
-        Cache cache2 = new Cache(1);
-        Scanner sc = new Scanner("tmp");
-        int index = 0;
-        if (args[0].equals("1")) {
-            cache1 = new Cache(Integer.valueOf(args[1]));
-            System.out.println("First level cache with " + args[1] + " entries has been created");
-                    sc = new Scanner(new File(args[2]));
-            cacheLevels = 1;
-        } else if (args[0].equals("2")) {
-            cache1 = new Cache(Integer.valueOf(args[1]));
-            cache2 = new Cache(Integer.valueOf(args[2]));
-            System.out.println("First level cache with " + args[1] + " entries has been created");
-                    System.out.println("Second level cache with " + args[2] + " entries has been created");
-                            sc = new Scanner(new File(args[3]));
-            cacheLevels = 2;
-        } else {
-            System.out.println("Review README file and correct your input arguments.");
-                    System.exit(0);
-        }
-        System.out.println("..............................");
-        while(sc.hasNext()) {
-            String word = sc.next();
-            if (cacheLevels == 1) {
-                index = cache1.getObject(word);
-                NR+=1;
-                if (index == -1) {
-                    cache1.addObject(word);
-                } else {
-                    cache1.removeObject(index);
-                    cache1.addObject(word);
-                    NH+=1;
-                }
-            } else if (cacheLevels == 2) {
-                index = cache1.getObject(word);
-                NR1+=1;
-                if (index == -1) {
-                    cache1.addObject(word);
-                    index = cache2.getObject(word);
-                    NR2+=1;
-                    if (index == -1) {
-                        cache2.addObject(word);
-                    } else {
-                        cache2.removeObject(index);
-                        cache2.addObject(word);
-                        NH2+=1;
+    /**
+     * Driver method for testing one-level or two-level Cache implementation.
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        String input = "";
+        if (args.length == 3) {
+            // creating one-level-cache
+            if (args[0].equals("1")) {
+                if (args[1].matches("[0-9]+")) {
+                    String fileName = args[2].toString();
+                    int size = Integer.parseInt(args[1].toString());
+                    try {
+                        input = new String(Files.readAllBytes(Paths.get(fileName)));
+                        createCacheOne(input, size);
+                    } catch (IOException e) {
+                        System.out.println("File not Found");
+                        printUsage();
+                        System.exit(1);
                     }
                 } else {
-                    cache1.removeObject(index);
-                    cache1.addObject(word);
-                    cache2.removeObject(cache2.getObject(word));
-                    cache2.addObject(word);
-                    NH1+=1;
+                    System.out.println("Cache entries must be a number");
+                    printUsage();
+                    System.exit(1);
                 }
+            } else {
+                System.out.println("Only 1 or 2 is acceptable as Cache Levels");
+                printUsage();
+                System.exit(1);
             }
 
+        } else if (args.length == 4) {
+            // creating two-level-cache
+            if (args[0].equals("2")) {
+                if (args[1].matches("[0-9]+") && args[2].matches("[0-9]+")) {// + means one or more times
+                    String fileName = args[3].toString();
+                    int size1 = Integer.parseInt(args[1].toString());
+                    int size2 = Integer.parseInt(args[2].toString());
+                    if (size1 < size2) {
+                        try {
+                            input = new String(Files.readAllBytes(Paths.get(fileName)));
+                            createCacheTwo(input, size1, size2);
+                        } catch (IOException e) {
+                            System.out.println("File not Found");
+                            printUsage();
+                            System.exit(1);
+                        }
+                    } else {
+                        System.out.println("\nLevel-one-Cache size must be lower than Level-two-Cache size\n");
+                        printUsage();
+                        System.exit(1);
+                    }
+                } else {
+                    System.out.println("Cache entries must be a number");
+                    printUsage();
+                    System.exit(1);
+                }
+            } else {
+                System.out.println("Only 1 or 2 is acceptable as Cache Levels");
+                printUsage();
+                System.exit(1);
+            }
+        } else {
+            printUsage();
+            System.exit(1);
         }
-        if (cacheLevels == 1) {
-            HR = NH/(NR*1.0);
-            System.out.println("Total number of references: " + NR);
-            System.out.println("Total number of cache hits: " + NH);
-            System.out.println("The global hit ratio : " + HR);
-        } else if (cacheLevels == 2) {
-            HR = (NH1 + NH2)/(NR1*1.0);
-            HR1 = NH1/(NR1*1.0);
-            HR2 = NH2/(NR2*1.0);
-            System.out.println("Total number of references: " + (NR1));
-            System.out.println("Total number of cache hits: " + (NH1 + NH2));
-            System.out.println("The global hit ratio : " + HR);
-            System.out.println("Number of 1st-level cache hits: " + NH1);
-            System.out.println("1st-level cache hit ratio : " + HR1);
-            System.out.println("Number of 2nd-level cache hits: " + NH2);
-            System.out.println("2nd-level cache hit ratio : " + HR2);
+    }
+
+    /**
+     * Tests two-level Cache implementation
+     *
+     * @param input is the string input
+     * @param size1 is the number of 1st-level cache entries
+     * @param size2 is the number of 2nd-level cache entries
+     */
+    private static void createCacheTwo(String input, int size1, int size2) {
+        Cache<String> levelOneCache = new Cache<String>(size1);
+        System.out.println("First Level cache with " + size1 + " entries has been created.");
+        Cache<String> levelTwoCache = new Cache<String>(size2);
+        System.out.println("Second Level cache with " + size2 + " entries has been created.\n");
+        // StringTokenizer stringInput = new StringTokenizer(input, " //\n");//
+        // different approach
+        //String[] parseInput = input.split("\\s+");
+        Scanner scan = new Scanner(input);
+        int i = 0;
+        int j = 0;
+        int cacheOneHit = 0;
+        int cacheTwoHit = 0;
+        int cacheOneSearch = 0;
+        int cacheTwoSearch = 0;
+        String fileString;
+        // System.out.println(parseInput.length);
+        // while (stringInput.hasMoreTokens()) {
+        //for (int aLength = 0; aLength < parseInput.length; aLength++) {
+        while (scan.hasNext()) {
+            // fileString = stringInput.nextToken();
+            //fileString = parseInput[aLength];
+            cacheOneSearch++;
+            fileString = scan.next();
+
+            if (levelOneCache.getCacheLinkedList().contains(fileString)) {
+                cacheOneHit++;
+                int index = levelOneCache.getCacheLinkedList().indexOf(fileString);
+                levelOneCache.removeFromCache(index);
+                levelOneCache.addToCache(fileString);
+
+                levelTwoCache.removeFromCache(index);
+                levelTwoCache.addToCache(fileString);
+                //cacheOneHit++;
+            } else if (levelTwoCache.getCacheLinkedList().contains(fileString)) {
+                cacheTwoSearch++;
+                cacheTwoHit++;
+                int index = levelTwoCache.getCacheLinkedList().indexOf(fileString);
+                levelTwoCache.removeFromCache(index);
+                levelTwoCache.addToCache(fileString);
+
+                if (levelOneCache.cacheFull()) {
+                    levelOneCache.removeLastCache();
+                    levelOneCache.addToCache(fileString);
+                } else {
+                    levelOneCache.addToCache(fileString);
+                }
+                //cacheTwoHit++;
+                //j++;// both time searches
+            } else {
+                cacheTwoSearch++;
+                // add to level one
+                if (levelOneCache.cacheFull()) {
+                    levelOneCache.removeLastCache();
+                    levelOneCache.addToCache(fileString);
+                } else {
+                    levelOneCache.addToCache(fileString);
+                }
+                // add to level two
+                if (levelTwoCache.cacheFull()) {
+                    levelTwoCache.removeLastCache();
+                    levelTwoCache.addToCache(fileString);
+                } else {
+                    levelTwoCache.addToCache(fileString);
+                }
+            }
+            /*if (parseInput.length < 100) {
+                if (aLength % 20 == 0)
+                    System.out.print(".");
+            } else {
+                if (aLength % 20000 == 0)
+                    System.out.print(".");
+            }*/
+            //i++;
         }
+        System.out.println("\n");
+        //cacheOneSearch = i;
+        //cacheTwoSearch = j;
+        printTwoLevelCache(cacheOneSearch, cacheTwoSearch, cacheOneHit, cacheTwoHit);
+    }
+
+    /**
+     * Tests an one-level Cache implementation
+     *
+     * @param input is the string input
+     * @param size  is the number of Cache entries
+     */
+    private static void createCacheOne(String input, int size) {
+        Cache<String> oneLevelCache = new Cache<String>(size);
+        System.out.println("One-Level cache with " + size + " entries has been created.\n");
+        StringTokenizer stringInput = new StringTokenizer(input, "\t ");
+        //String[] parseInput = input.split("\\s+");
+        //Scanner scan = new Scanner(input);
+        int i = 0;
+        int totalHits = 0;
+        int totalSearch = 0;
+        String fileString;
+        while (stringInput.hasMoreTokens()) {
+        //for (int aLength = 0; aLength < parseInput.length; aLength++) {
+            // fileString = stringInput.nextToken();
+        //while (scan.hasNext() != null) {
+            totalSearch++;
+            fileString = stringInput.nextToken();
+            //fileString = parseInput[aLength];
+            //fileString = scan.next();
+            if (oneLevelCache.getCacheLinkedList().contains(fileString)) {
+                // oneLevelCache.removeFromCache(fileString);
+                oneLevelCache.addToCache(fileString);
+                totalHits++;
+            } else {
+                if (oneLevelCache.cacheFull()) {
+                    oneLevelCache.removeLastCache();
+                    oneLevelCache.addToCache(fileString);
+                } else {
+                    oneLevelCache.addToCache(fileString);
+                }
+            }
+            /*if (parseInput.length < 100) {
+                if (aLength % 20 == 0)
+                    System.out.print(".");
+            } else {
+                if (aLength % 20000 == 0)
+                    System.out.print(".");
+            }*/
+            //i++;
+        }
+        //totalSearch = i;// i started from 0
+        printLevelOneCache(totalHits, totalSearch);
+    }
+
+    /**
+     * Prints one-level cache references, hits and ratio.
+     *
+     * @param totalHits   is total hits in one-level cache
+     * @param totalSearch is total references in one-level cache
+     */
+    private static void printLevelOneCache(int totalHits, int totalSearch) {
+        DecimalFormat df = new DecimalFormat(".0000");
+        double cacheHitRatio = 0;
+        cacheHitRatio = (double) totalHits / totalSearch;
+        System.out.println("\n");
+        System.out.println("Total References: " + totalSearch + "\nTotal cache hits: " + totalHits
+                + "\nCache hit ratio: " + df.format(cacheHitRatio));
+    }
+
+    /**
+     * Prints the Two-level Cache references, hits and ratios.
+     *
+     * @param cacheOneSearch is level-one cache search references
+     * @param cacheTwoSearch is level-two cache search references
+     * @param cacheOneHit    is level-one cache hits
+     * @param cacheTwoHit    is level-two cache hits
+     */
+    private static void printTwoLevelCache(int cacheOneSearch, int cacheTwoSearch, int cacheOneHit, int cacheTwoHit) {
+        DecimalFormat df = new DecimalFormat(".0000");
+        double cacheOneRatio = 0;
+        double cacheTwoRatio = 0;
+        double globalRatio = 0;
+        int totalHit = 0;
+        cacheOneRatio = (double) cacheOneHit / cacheOneSearch;
+        cacheTwoRatio = (double) cacheTwoHit / cacheTwoSearch;
+        totalHit = cacheOneHit + cacheTwoHit;
+        globalRatio = (double) totalHit / cacheOneSearch;
+
+        System.out.println();
+        System.out.println("Total number of References: " + cacheOneSearch + "\nTotal number of cache hits: " + totalHit + "\n\nGlobal hit ratio: "
+                + df.format(globalRatio));
+        System.out.println();
+        System.out.println(
+                "The number of 1st-level references: " + cacheOneSearch + "\nThe number of 1st-level cache hits: "
+                        + cacheOneHit + "\nThe 1st-level hit ratio: " + df.format(cacheOneRatio));
+        System.out.println();
+        System.out.println(
+                "The number of 2nd-level references: " + cacheTwoSearch + "\nThe number of 2nd-level cache hits: "
+                        + cacheTwoHit + "\nThe 2nd-level hit ratio: " + df.format(cacheTwoRatio));
+    }
+
+    /**
+     * Prints Usage
+     */
+    private static void printUsage() {
+        System.out.println("Usage: $ java Test [1] [Level-one-Cache size] [filename]");
+        System.out.println("Usage: $ java Test [2] [Level-one-Cache-size] [Level-two-Cache-size] [filename]");
+        System.out.println("1 for one-level-Cache \n2 for two-level Cache");
     }
 }
