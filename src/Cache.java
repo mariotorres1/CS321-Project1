@@ -13,10 +13,10 @@ public class Cache<T> {
     private int size;
 
     /**
-     * Constructor: creates a Cache Object
+     * Constructor: creates a Cache
      */
     public Cache(int size) {
-        cacheLinkedList = new LinkedList<T>();
+        this.cacheLinkedList = new LinkedList<T>();
         this.size = size;
     }
 
@@ -27,15 +27,6 @@ public class Cache<T> {
      */
     public LinkedList<T> getCacheLinkedList() {
         return cacheLinkedList;
-    }
-
-    /**
-     * Sets Cache Linked List
-     *
-     * @param cacheLinkedList
-     */
-    public void setCacheLinkedList(LinkedList<T> cacheLinkedList) {
-        this.cacheLinkedList = cacheLinkedList;
     }
 
     /**
@@ -64,15 +55,6 @@ public class Cache<T> {
     }
 
     /**
-     * Removes the element from the Cache
-     *
-     * @param element to be removed from the Cache
-     */
-    public void removeFromCache(T element) {
-        cacheLinkedList.remove(element);
-    }
-
-    /**
      * Empties the Cache
      */
     public void clearCache() {
@@ -86,15 +68,6 @@ public class Cache<T> {
      */
     public boolean cacheFull() {
         return (cacheLinkedList.size() == size);
-    }
-
-    /**
-     * Returns true if the Cache is empty
-     *
-     * @return true if the Cache is empty
-     */
-    public boolean emptyCache() {
-        return (cacheLinkedList.size() == 0);
     }
 
     /**
