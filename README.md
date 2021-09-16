@@ -41,9 +41,9 @@ This program takes in command line arguments to be run successfully.
 The user should input 1 or 2 for the level of cache, along with the
 size(s) of the cache(s) and the text file to be read. 
 
-java CacheTest 1 <cache size> <input textfile name> or
-java CacheTest 2 <1st-level cache size> <2nd-level cache size> 
-<input textfilename>
+java CacheTest [1] [<cache size>] [<input textfile name>] or
+java CacheTest [2] [<1st-level cache size>] [<2nd-level cache size>] 
+[<input textfilename>]
 
 ## Results 
 
