@@ -61,8 +61,11 @@ I used my old projects from CS 221 as a reference and a refresher
 since I haven't used Java in awhile. I also looked up String 
 Tokenizer which sent me to some examples on StackOverflow and 
 the java api since I haven't used a String Tokenizer before. 
-Other than that, I didn't research much which is maybe why I 
-couldn't figure out how to get the right solution! 
+I also found an outline of a different implementation of a 
+cache on github that led me to the design I chose because it
+made sense to me even though the outcome wasn't 100 percent 
+correct, I feel that was more on me overthinking than having a 
+completely terrible program outline/setup.
 
 ----------
 This README template is using Markdown. To preview your README output,
